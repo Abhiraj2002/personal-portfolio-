@@ -6,7 +6,15 @@ const MESSAGES_FILE = 'data/messages.json';
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(new URL('./public', import.meta.url).pathname));
+const publicDir = new URL('./public', import.meta.url).pathname;
+
+// Page assets use relative URLs, so serve at /info without a trailing slash.
+app.get('/info', (req, res, next) => {
+  if (req.originalUrl.split('?')[0].endsWith('/')) return res.redirect(301, '/info');
+  res.sendFile('index.html', { root: publicDir });
+});
+
+app.use(express.static(publicDir));
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true });
