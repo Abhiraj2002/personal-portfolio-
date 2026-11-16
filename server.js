@@ -6,7 +6,7 @@ const MESSAGES_FILE = 'data/messages.json';
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(new URL('./public', import.meta.url).pathname));
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true });
@@ -41,6 +41,10 @@ app.post('/api/contact', async (req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(PORT, () => {
-  console.log(`Portfolio running at http://localhost:${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Portfolio running at http://localhost:${PORT}`);
+  });
+}
+
+export default app;
