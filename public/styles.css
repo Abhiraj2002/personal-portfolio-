@@ -606,25 +606,6 @@ ul { list-style: none; }
 }
 
 /* ---------- Scroll effects ---------- */
-.scroll-progress {
-  position: fixed;
-  top: 0; left: 50%;
-  width: 100%; max-width: 430px;
-  height: 2px;
-  transform: translateX(-50%);
-  z-index: 30;
-  pointer-events: none;
-  mix-blend-mode: difference; /* readable over both the light first page and the dark sections */
-}
-.scroll-progress::after {
-  content: '';
-  display: block;
-  height: 100%;
-  background: #ececec;
-  transform: scaleX(var(--prog, 0));
-  transform-origin: left;
-}
-
 /* headings: each word slides up in turn */
 .js .section-title span {
   opacity: 0;

@@ -34,7 +34,6 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="scroll-progress" aria-hidden="true"></div>
   <!-- ============ HEADER ============ -->
   <header class="header">
     <button class="menu-btn" aria-label="Open menu" aria-expanded="false">
@@ -259,16 +258,13 @@
       updateTl();
     }
 
-    // Scroll effects: progress bar and hero depth
+    // Scroll effects: hero depth
     const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const progBar = document.querySelector('.scroll-progress');
     const heroEl = document.querySelector('.hero');
     let queued = false;
     const frame = () => {
       queued = false;
       const y = scrollY;
-      const max = document.documentElement.scrollHeight - innerHeight;
-      progBar.style.setProperty('--prog', max > 0 ? y / max : 0);
       if (!reduceMotion) {
         const hh = heroEl.offsetHeight;
         heroEl.style.setProperty('--hp', Math.min(y, hh));
