@@ -18,6 +18,9 @@
     .msg-email { color: var(--muted); font-size: 13px; word-break: break-all; }
     .msg-body { margin-top: 10px; white-space: pre-wrap; word-break: break-word; }
     .empty { color: var(--muted); }
+    .denied { text-align: center; }
+    .denied img { display: block; width: 100%; border-radius: 14px; margin-bottom: 18px; }
+    .denied strong { font-weight: 700; font-size: 20px; color: var(--text); }
   </style>
 </head>
 <body>
@@ -35,8 +38,13 @@
     (async () => {
       const list = document.getElementById('list');
       if (!pin) {
-        list.textContent = 'Ky laadle, bohat tezz hora hai';
-        list.className = 'empty';
+        list.className = 'denied';
+        const img = document.createElement('img');
+        img.src = '/assets/monkey.jpg';
+        img.alt = '';
+        const text = document.createElement('strong');
+        text.textContent = 'Ky laadle, bohat tezz hora hai';
+        list.replaceChildren(img, text);
         return;
       }
       try {
