@@ -42,6 +42,28 @@ app.post('/api/contact', async (req, res) => {
     return res.status(500).json({ error: 'Could not save your message. Please try again later.' });
   }
 
+  // The message is already saved, so an email failure must not fail the request.
+  // Awaited because serverless functions can be frozen once the response is sent.
+  const { RESEND_API_KEY, NOTIFY_EMAIL } = process.env;
+  if (RESEND_API_KEY && NOTIFY_EMAIL) {
+    try {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: 'Portfolio <onboarding@resend.dev>',
+          to: [NOTIFY_EMAIL],
+          reply_to: email,
+          subject: `Portfolio message from ${name.replace(/[\r\n]+/g, ' ')}`,
+          text: `From: ${name} <${email}>\n\n${message}`,
+        }),
+      });
+      if (!r.ok) throw new Error(`Resend responded ${r.status}: ${await r.text()}`);
+    } catch (err) {
+      console.error('Email notification failed:', err);
+    }
+  }
+
   res.json({ ok: true });
 });
 
