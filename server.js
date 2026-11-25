@@ -1,8 +1,8 @@
 import express from 'express';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { neon } from '@neondatabase/serverless';
 
 const app = express();
-const MESSAGES_FILE = 'data/messages.json';
+const sql = neon(process.env.DATABASE_URL);
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
@@ -35,16 +35,12 @@ app.post('/api/contact', async (req, res) => {
     return res.status(400).json({ error: 'Message is too long.' });
   }
 
-  let messages = [];
   try {
-    messages = JSON.parse(await readFile(MESSAGES_FILE, 'utf8'));
-  } catch {
-    // file doesn't exist yet
+    await sql`INSERT INTO messages (name, email, message) VALUES (${name}, ${email}, ${message})`;
+  } catch (err) {
+    console.error('Saving message failed:', err);
+    return res.status(500).json({ error: 'Could not save your message. Please try again later.' });
   }
-  messages.push({ name, email, message, createdAt: new Date().toISOString() });
-
-  await mkdir('data', { recursive: true });
-  await writeFile(MESSAGES_FILE, JSON.stringify(messages, null, 2));
 
   res.json({ ok: true });
 });
