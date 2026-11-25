@@ -1,4 +1,5 @@
 import express from 'express';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { neon } from '@neondatabase/serverless';
 
 const app = express();
@@ -12,6 +13,10 @@ const publicDir = new URL('./public', import.meta.url).pathname;
 app.get('/info', (req, res, next) => {
   if (req.originalUrl.split('?')[0].endsWith('/')) return res.redirect(301, '/info');
   res.sendFile('index.html', { root: publicDir });
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile('admin.html', { root: publicDir });
 });
 
 app.use(express.static(publicDir));
@@ -65,6 +70,36 @@ app.post('/api/contact', async (req, res) => {
   }
 
   res.json({ ok: true });
+});
+
+// Admin: the PIN lives in the ADMIN_PIN env var and is only ever checked here.
+// Failed attempts are throttled per IP (best-effort: in-memory, per server instance).
+const failedPins = new Map();
+const digest = (s) => createHash('sha256').update(s).digest();
+
+app.get('/api/admin/messages', async (req, res) => {
+  const ip = req.get('x-forwarded-for')?.split(',')[0].trim() || req.ip;
+  const fails = failedPins.get(ip);
+  if (fails && fails.until > Date.now()) {
+    return res.status(429).json({ error: 'Too many attempts. Try again later.' });
+  }
+
+  const expected = process.env.ADMIN_PIN;
+  const pin = String(req.get('x-admin-pin') ?? '');
+  if (!expected || !timingSafeEqual(digest(pin), digest(expected))) {
+    const n = (fails?.n ?? 0) + 1;
+    failedPins.set(ip, n >= 5 ? { n: 0, until: Date.now() + 15 * 60 * 1000 } : { n, until: 0 });
+    return res.status(401).json({ error: 'Invalid PIN.' });
+  }
+  failedPins.delete(ip);
+
+  try {
+    const messages = await sql`SELECT id, name, email, message, created_at FROM messages ORDER BY created_at DESC LIMIT 200`;
+    res.json({ messages });
+  } catch (err) {
+    console.error('Loading messages failed:', err);
+    res.status(500).json({ error: 'Could not load messages.' });
+  }
 });
 
 if (!process.env.VERCEL) {

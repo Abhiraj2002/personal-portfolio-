@@ -120,6 +120,17 @@ ul { list-style: none; }
 }
 .menu a { font-family: var(--display); font-size: 40px; font-weight: 700; line-height: 1.15; letter-spacing: -0.04em; text-transform: uppercase; }
 .menu a:hover { color: var(--muted); }
+/* triple-tapping the blank space must not select the menu text */
+.menu { -webkit-user-select: none; user-select: none; }
+.pin { margin-top: 18px; }
+.pin input {
+  -webkit-user-select: text; user-select: text;
+  width: 100%; max-width: 220px; padding: 10px 0;
+  background: none; border: 0; border-bottom: 1px solid var(--line);
+  color: var(--text); font: inherit; font-size: 18px; letter-spacing: .3em;
+}
+.pin input:focus { outline: none; border-bottom-color: var(--text); }
+.pin-error { min-height: 1.2em; margin-top: 8px; font-size: 13px; color: #e5736b; }
 .menu-open .menu { opacity: 1; pointer-events: auto; }
 .menu-open { overflow: hidden; }
 

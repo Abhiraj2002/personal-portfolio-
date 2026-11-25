@@ -58,6 +58,10 @@
     <a href="#education">education</a>
     <a href="#skills">skills</a>
     <a href="#contact">contact</a>
+    <form class="pin" hidden>
+      <input type="password" name="pin" placeholder="PIN" autocomplete="off" aria-label="Admin PIN" />
+      <p class="pin-error" role="alert"></p>
+    </form>
   </nav>
 
   <!-- ============ HERO ============ -->
@@ -236,13 +240,43 @@
     // Menu
     const btn = document.querySelector('.menu-btn');
     const menu = document.querySelector('.menu');
+    const pinForm = menu.querySelector('.pin');
+    const pinInput = pinForm.elements.pin;
+    const pinError = pinForm.querySelector('.pin-error');
     const toggle = (open) => {
       document.body.classList.toggle('menu-open', open);
       btn.setAttribute('aria-expanded', open);
       menu.setAttribute('aria-hidden', !open);
+      if (!open) { pinForm.hidden = true; pinInput.value = ''; pinError.textContent = ''; }
     };
     btn.addEventListener('click', () => toggle(!document.body.classList.contains('menu-open')));
     menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => toggle(false)));
+
+    // Admin: three quick taps on the blank space of the menu reveal a PIN field.
+    // The PIN is checked by the server; the page never contains it.
+    let taps = 0, tapTimer;
+    menu.addEventListener('click', (e) => {
+      if (e.target !== menu) return;
+      clearTimeout(tapTimer);
+      tapTimer = setTimeout(() => { taps = 0; }, 600);
+      if (++taps < 3) return;
+      taps = 0;
+      pinForm.hidden = false;
+      pinInput.focus();
+    });
+    pinForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      pinError.textContent = '';
+      try {
+        const res = await fetch('/api/admin/messages', { headers: { 'x-admin-pin': pinInput.value } });
+        if (!res.ok) throw new Error((await res.json()).error || 'Invalid PIN.');
+        sessionStorage.setItem('adminPin', pinInput.value);
+        location.href = '/admin';
+      } catch (err) {
+        pinError.textContent = err.message;
+        pinInput.select();
+      }
+    });
 
     // Experience timeline: the pointer eases toward the scroll position
     const tl = document.querySelector('.timeline');

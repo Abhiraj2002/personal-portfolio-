@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .admin { padding: 28px 20px 60px; }
+    .admin-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; }
+    .admin-head h1 { font-size: 28px; letter-spacing: -0.03em; }
+    .admin-head button { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+    .msg { margin-bottom: 12px; }
+    .msg-top { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); }
+    .msg-name { font-weight: 600; color: var(--text); font-size: 15px; margin: 6px 0 2px; }
+    .msg-email { color: var(--muted); font-size: 13px; word-break: break-all; }
+    .msg-body { margin-top: 10px; white-space: pre-wrap; word-break: break-word; }
+    .empty { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="admin">
+    <div class="admin-head">
+      <h1>Messages</h1>
+      <button id="logout" type="button">Log out</button>
+    </div>
+    <div id="list"><p class="empty">Loading…</p></div>
+  </main>
+
+  <script>
+    const pin = sessionStorage.getItem('adminPin');
+    const leave = () => { sessionStorage.removeItem('adminPin'); location.replace('/'); };
+    if (!pin) leave();
+
+    document.getElementById('logout').addEventListener('click', leave);
+
+    (async () => {
+      const list = document.getElementById('list');
+      try {
+        const res = await fetch('/api/admin/messages', { headers: { 'x-admin-pin': pin } });
+        if (res.status === 401 || res.status === 429) return leave();
+        if (!res.ok) throw new Error();
+        const { messages } = await res.json();
+        list.textContent = '';
+        if (!messages.length) {
+          list.innerHTML = '<p class="empty">No messages yet.</p>';
+          return;
+        }
+        // textContent only: message text comes from visitors and must never be parsed as HTML
+        for (const m of messages) {
+          const card = document.createElement('article');
+          card.className = 'glass card msg';
+          const parts = [
+            ['div', 'msg-top', new Date(m.created_at).toLocaleString()],
+            ['div', 'msg-name', m.name],
+            ['div', 'msg-email', m.email],
+            ['p', 'msg-body', m.message],
+          ];
+          for (const [tag, cls, text] of parts) {
+            const el = document.createElement(tag);
+            el.className = cls;
+            el.textContent = text;
+            card.append(el);
+          }
+          list.append(card);
+        }
+      } catch {
+        list.innerHTML = '<p class="empty">Could not load messages.</p>';
+      }
+    })();
+  </script>
+</body>
+</html>
