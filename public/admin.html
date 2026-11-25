@@ -32,10 +32,13 @@
   <script>
     const pin = sessionStorage.getItem('adminPin');
     const leave = () => { sessionStorage.removeItem('adminPin'); location.replace('/'); };
-    if (!pin) leave();
-
     (async () => {
       const list = document.getElementById('list');
+      if (!pin) {
+        list.textContent = 'Ky laadle, bohat tezz hora hai';
+        list.className = 'empty';
+        return;
+      }
       try {
         const res = await fetch('/api/admin/messages', { headers: { 'x-admin-pin': pin } });
         if (res.status === 401 || res.status === 429) return leave();
